@@ -5,10 +5,10 @@
 FFT::FFT(int n)
 {
     this->n = n;
-    BITREV = new int[n+1];
     int i = 0;
     int j = 0;
     int n2 = n >> 1;
+    BITREV = new int[n];
     for (;;) {
         BITREV[i] = j;
         if (++i >= n)
@@ -20,7 +20,6 @@ FFT::FFT(int n)
         }
         j += k;
     }
-    SINTBL = new double[n+1];
     n2 = n >> 1;
     int n4 = n >> 2;
     int n8 = n >> 3;
@@ -28,6 +27,7 @@ FFT::FFT(int n)
     double dc = 2 * t * t;
     double ds = sqrt(dc * (2 - dc));
     t = 2 * dc;
+    SINTBL = new double[n+n4];
     double c = SINTBL[n4] = 1;
     double s = SINTBL[0] = 0;
     for (int i = 1; i < n8; i++) {
@@ -97,7 +97,7 @@ FFT::fft(double* x, double* y)
     for (int k = 1; k < n; k = k2) {
         int h = 0;
         k2 = k << 1;
-        d <<= 1;
+        d = n / k2;
         for (int j = 0; j < k; j++) {
             double c = SINTBL[h + n4];
             double s = SINTBL[h];
@@ -135,7 +135,7 @@ FFT::ifft(double* x, double* y)
     for (int k = 1; k < n; k = k2) {
         int h = 0;
         k2 = k << 1;
-        d <<= 1;
+        d = n / k2;
         for (int j = 0; j < k; j++) {
             double c = SINTBL[h + n4];
             double s = -SINTBL[h];
@@ -189,10 +189,4 @@ FFT::hanning(double* x)
     for (int i = 0; i < n; i++) {
         x[i] *= 0.5 - 0.5 * COSTBL[i];
     }
-}
-
-int
-main(int ac, char* av[])
-{
-    FFT* fft = new FFT(32);
 }
