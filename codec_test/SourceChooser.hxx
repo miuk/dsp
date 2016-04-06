@@ -3,10 +3,12 @@
 #include <QIODevice>
 #include <QAudioFormat>
 
+#include "Codec.hxx"
+
 class SourceChooser : public QObject {
     Q_OBJECT
 public:
-    SourceChooser(QWidget* parent);
+    SourceChooser(QWidget* parent, Codec* codec);
     virtual ~SourceChooser(void);
     QLayout* getLayout(void) { return layout; };
 
@@ -22,5 +24,6 @@ private slots:
 private:
     QWidget* parent;
     QBoxLayout* layout;
+    Codec* codec;
 };
 

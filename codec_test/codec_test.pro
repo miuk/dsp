@@ -4,10 +4,12 @@
 
 TEMPLATE = app
 TARGET = codec_test
-INCLUDEPATH += .
+INCLUDEPATH += . /usr/local/include
+LIBPATH += /usr/local/lib
+LIBS += -lspeex
 
 # Input
-HEADERS += Player.hxx AudioSource.hxx SourceChooser.hxx SpeexOptionSetting.hxx
-SOURCES += Hello.cpp Player.cpp AudioSource.cpp SourceChooser.cpp SpeexOptionSetting.cpp
+HEADERS += Player.hxx AudioSource.hxx SourceChooser.hxx SpeexOptionSetting.hxx NullCodec.hxx CodecWrapper.hxx CodecChooser.hxx
+SOURCES += Hello.cpp Player.cpp AudioSource.cpp SourceChooser.cpp SpeexOptionSetting.cpp SpeexCodec.cpp NullCodec.cpp CodecWrapper.cpp CodecChooser.cpp
 QT += widgets
 QT += multimedia

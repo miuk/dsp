@@ -10,9 +10,10 @@
 #include <iostream>
 using namespace std;
 
-SpeexOptionSetting::SpeexOptionSetting(QWidget* parent)
+SpeexOptionSetting::SpeexOptionSetting(QWidget* parent, SpeexCodec* codec)
 {
     this->parent = parent;
+    this->codec = codec;
     QFormLayout* layout = new QFormLayout(parent);
     QButtonGroup* bg = new QButtonGroup();
     QHBoxLayout* w = new QHBoxLayout(parent);
@@ -54,8 +55,10 @@ void
 SpeexOptionSetting::onXBRToggled(int id, bool state)
 {
     cout << "onXBRToggled id=" << id << ", state=" << state << endl;
-    if (state)
+    if (state) {
         xBR = id;
+        codec->setXBR(id);
+    }
 }
 
 void
@@ -63,4 +66,5 @@ SpeexOptionSetting::onQualityChanged(int value)
 {
     cout << "onQualityChanged value=" << value << endl;
     quality = value;
+    codec->setQuality(value);
 }

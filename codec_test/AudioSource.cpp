@@ -12,6 +12,7 @@ AudioSource::AudioSource(void)
     buf = NULL;
     len = 0;
     pos = NULL;
+    codec = NULL;
 }
 
 AudioSource::~AudioSource(void)
@@ -75,6 +76,8 @@ AudioSource::reset()
         return false;
     pos = buf;
     rest = len;
+    if (codec)
+        codec->clear();
     return true;
 }
 
@@ -110,16 +113,41 @@ AudioSource::writeData(const char*, qint64)
     return 0;
 };
 
+size_t
+AudioSource::procData(char* dst, size_t len)
+{
+    if (codec == NULL) {
+        memcpy(dst, pos, len);
+        return len;
+    }
+    size_t rlen = codec->codec((int16_t*)pos, len/2, (int16_t*)dst);
+    rlen *= 2;
+    return rlen;
+}
+
+size_t
+AudioSource::adjustReadLen(qint64 maxSize)
+{
+    if (codec == NULL)
+        return maxSize;
+    int frame_size = codec->getFrameSize();
+    return (maxSize / frame_size) * frame_size;
+}
+
 qint64
 AudioSource::readData(char* data, qint64 maxSize)
 {
-    cout << "readData " << maxSize << endl;
-    size_t rlen = maxSize;
-    if ((size_t)maxSize > rest)
+    size_t rlen = adjustReadLen(maxSize);
+    if ((size_t)rlen > rest)
         rlen = rest;
-    memcpy(data, pos, rlen);
-    pos += rlen;
-    rest -= rlen;
+    rlen = procData(data, rlen);
+    if (rlen <= rest) {
+        pos += rlen;
+        rest -= rlen;
+    } else {
+        pos += rest;
+        rest = 0;
+    }
     cout << "readData maxSize=" << maxSize
          << ", rlen=" << rlen
          << ", rest=" << rest
@@ -152,4 +180,6 @@ AudioSource::clear(void)
     buf = NULL;
     len = 0;
     pos = NULL;
+    if (codec)
+        codec->clear();
 }

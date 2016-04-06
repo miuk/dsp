@@ -1,6 +1,9 @@
 #include "SourceChooser.hxx"
 #include "AudioSource.hxx"
 
+#include "NullCodec.hxx"
+#include "SpeexCodec.hxx"
+
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QFileDialog>
@@ -8,9 +11,10 @@
 #include <iostream>
 using namespace std;
 
-SourceChooser::SourceChooser(QWidget* parent)
+SourceChooser::SourceChooser(QWidget* parent, Codec* codec)
 {
     this->parent = parent;
+    this->codec = codec;
     layout = new QHBoxLayout(parent);
     QPushButton* b = new QPushButton("Open", parent);
     connect(b, SIGNAL(clicked()), this, SLOT(open()));
@@ -30,6 +34,7 @@ SourceChooser::open()
 
     AudioSource* src = new AudioSource();
     src->setFileName(fname);
+    src->setCodec(codec);
     if (src->open(QIODevice::ReadOnly) == false) {
         cout << "open failed" << endl;
         return;
