@@ -1,5 +1,6 @@
 #include "SpeexCodec.hxx"
 
+#include <assert.h>
 #include <string.h>
 #include <iostream>
 using namespace std;
@@ -23,9 +24,8 @@ SpeexCodec::SpeexCodec(void)
     enc_state = NULL;
     dec_state = NULL;
     frame_size = 0;
-    rest = NULL;
-    rest_len = 0;
 
+    hz = 8000;
     quality = 5;
     xBR = 0;
 
@@ -52,11 +52,23 @@ SpeexCodec::initXBR(int value)
     xBR = value;
     if (enc_state != NULL)
         speex_encoder_destroy(enc_state);
-    enc_state = speex_encoder_init(&speex_nb_mode);
-    speex_bits_init(&enc_bits);
     if (dec_state != NULL)
         speex_decoder_destroy(dec_state);
-    dec_state = speex_decoder_init(&speex_nb_mode);
+    switch (hz) {
+    case 8000 :
+        enc_state = speex_encoder_init(&speex_nb_mode);
+        dec_state = speex_decoder_init(&speex_nb_mode);
+        break;
+    case 16000 :
+        enc_state = speex_encoder_init(&speex_wb_mode);
+        dec_state = speex_decoder_init(&speex_wb_mode);
+        break;
+    case 32000 :
+        enc_state = speex_encoder_init(&speex_uwb_mode);
+        dec_state = speex_decoder_init(&speex_uwb_mode);
+        break;
+    };
+    speex_bits_init(&enc_bits);
     speex_bits_init(&dec_bits);
     speex_encoder_ctl(enc_state, SPEEX_GET_FRAME_SIZE, &frame_size);
     if (xBR == 2) {
@@ -101,6 +113,15 @@ SpeexCodec::setQuality(int value)
 }
 
 void
+SpeexCodec::setHz(int hz)
+{
+    if (this->hz == hz)
+        return;
+    this->hz = hz;
+    initXBR(xBR);
+}
+
+void
 SpeexCodec::setXBR(int value)
 {
     if (value == xBR)
@@ -112,31 +133,18 @@ void
 SpeexCodec::clear(void)
 {
     cout << "SpeexCodec::clear" << endl;
-    delete[] rest;
-    rest = NULL;
-    rest_len = 0;
 }
 
 int
 SpeexCodec::encode(const int16_t* src, int srclen, char* dst)
 {
+    int n = srclen / frame_size;
+    int16_t buf[srclen];
+    memcpy(buf, src, sizeof(int16_t) * srclen);
     pthread_mutex_lock(&mutex);
-
-    int buflen = rest_len + srclen;
-    cout << "SpeexCodec::encode buflen=" << buflen << endl;
-    int16_t buf[buflen];
-    if (rest_len > 0)
-        memcpy(buf, rest, sizeof(int16_t) * rest_len);
-    memcpy(buf + sizeof(int16_t), src, sizeof(int16_t) * srclen);
-    rest_len = 0;
-    delete[] rest;
-    rest = NULL;
-    
     int dstlen = 0;
-    const int16_t* tail = buf + buflen;
     char* dst_pos = dst;
     int16_t* pos = buf;
-    int n = buflen / frame_size;
     for (int i = 0; i < n; i++) {
         speex_bits_reset(&enc_bits);
         speex_encode_int(enc_state, pos, &enc_bits);
@@ -145,14 +153,7 @@ SpeexCodec::encode(const int16_t* src, int srclen, char* dst)
         dstlen += nbyte;
         dst_pos += nbyte;
     }
-    if (pos < tail) {
-        rest_len = tail - pos;
-        rest = new int16_t[rest_len];
-        memcpy(rest, pos, sizeof(int16_t) * rest_len);
-    }
-
     pthread_mutex_unlock(&mutex);
-
     cout << "SpeexCodec::encode dstlen=" << dstlen << endl;
     return dstlen;
 }
@@ -185,26 +186,18 @@ SpeexCodec::decode(const char* src, int srclen, int16_t* dst)
 int
 SpeexCodec::codec(const int16_t* src, int srclen, int16_t* dst)
 {
-    pthread_mutex_lock(&mutex);
-    int buflen = rest_len + srclen;
-    int16_t buf[buflen];
-    if (rest_len > 0)
-        memcpy(buf, rest, sizeof(int16_t) * rest_len);
-    memcpy(buf + sizeof(int16_t), src, sizeof(int16_t) * srclen);
-    rest_len = 0;
-    delete[] rest;
-    rest = NULL;
-
+    int n = srclen / frame_size;
+    int16_t buf[srclen];
+    memcpy(buf, src, sizeof(int16_t) * srclen);
     int enclen = 0;
     int dstlen = 0;
-    const int16_t* tail = buf + buflen;
     int16_t* dst_pos = dst;
-    int16_t* pos = buf;
-    int n = buflen / frame_size;
+    int16_t* src_pos = buf;
+    pthread_mutex_lock(&mutex);
     for (int i = 0; i < n; i++) {
         char encoded[frame_size*2];
         speex_bits_reset(&enc_bits);
-        speex_encode_int(enc_state, pos, &enc_bits);
+        speex_encode_int(enc_state, src_pos, &enc_bits);
         int nbyte = speex_bits_write(&enc_bits, encoded, frame_size*2);
         enclen += nbyte;
         speex_bits_read_from(&dec_bits, encoded, nbyte);
@@ -212,22 +205,16 @@ SpeexCodec::codec(const int16_t* src, int srclen, int16_t* dst)
         if (ret != 0) {
             cout << "SpeexCodec::codec decode failed " << ret << endl;
         }
-        pos += frame_size;
+        src_pos += frame_size;
         dstlen += frame_size;
         dst_pos += frame_size;
     }
-    if (pos < tail) {
-        rest_len = tail - pos;
-        rest = new int16_t[rest_len];
-        memcpy(rest, pos, sizeof(int16_t) * rest_len);
-    }
     pthread_mutex_unlock(&mutex);
-    int bps = (srclen > 0) ? (64000 * enclen / srclen) : 0;
-    cout << "SpeexCodec::codec buflen=" << buflen
+    int bps = (srclen > 0) ? (hz * 8 * enclen / srclen) : 0;
+    cout << "SpeexCodec::codec"
          << ", srclen=" << srclen
          << ", dstlen=" << dstlen
          << ", enclen=" << enclen
-         << ", restlen=" << rest_len
          << ", bps=" << bps
          << endl;
     return dstlen;

@@ -1,4 +1,5 @@
 #include "AudioSource.hxx"
+#include "ulaw.h"
 
 #include <iostream>
 using namespace std;
@@ -13,11 +14,14 @@ AudioSource::AudioSource(void)
     len = 0;
     pos = NULL;
     codec = NULL;
+    codec_rest = NULL;
+    codec_rest_len = 0;
 }
 
 AudioSource::~AudioSource(void)
 {
     delete[] buf;
+    delete[] codec_rest;
 }
 
 bool
@@ -117,12 +121,55 @@ size_t
 AudioSource::procData(char* dst, size_t len)
 {
     if (codec == NULL) {
+        if (rest < len)
+            len = rest;
         memcpy(dst, pos, len);
+        pos += len;
+        rest -= len;
         return len;
     }
-    size_t rlen = codec->codec((int16_t*)pos, len/2, (int16_t*)dst);
-    rlen *= 2;
-    return rlen;
+    size_t last_len = 0;
+    if (codec_rest_len > 0) {
+        memcpy(dst, codec_rest, codec_rest_len);
+        last_len = codec_rest_len;
+        dst += codec_rest_len;
+        len -= codec_rest_len;
+        delete[] codec_rest;
+        codec_rest = NULL;
+        codec_rest_len = 0;
+    }
+    if (rest < len)
+        len = rest;
+    int frame_size = codec->getFrameSize() * 2;
+    size_t rlen = (len / frame_size) * frame_size;
+    if ((int)rlen < frame_size) {
+        pos += rest;
+        rest = 0;
+        return last_len;
+    }
+    if (rlen < len)
+        rlen += frame_size;
+    if (rest < rlen)
+        rlen -= frame_size;
+    if (rlen > len) {
+        char buf[rlen];
+        codec->codec((int16_t*)pos, rlen/2, (int16_t*)buf);
+        memcpy(dst, buf, len);
+        codec_rest_len = rlen - len;
+        codec_rest = new char[codec_rest_len];
+        memcpy(codec_rest, buf + len, codec_rest_len);
+    } else {
+        codec->codec((int16_t*)pos, rlen/2, (int16_t*)dst);
+    }
+    last_len += len;
+    pos += rlen;
+    rest -= rlen;
+    cout << "last_len=" << last_len
+         << ", rlen=" << rlen
+         << ", len=" << len
+         << ", codec_rest_len=" << codec_rest_len
+         << endl;
+    return last_len;
 }
 
 size_t
@@ -130,24 +177,17 @@ AudioSource::adjustReadLen(qint64 maxSize)
 {
     if (codec == NULL)
         return maxSize;
-    int frame_size = codec->getFrameSize();
+    int frame_size = codec->getFrameSize() * 2;
     return (maxSize / frame_size) * frame_size;
 }
 
 qint64
 AudioSource::readData(char* data, qint64 maxSize)
 {
-    size_t rlen = adjustReadLen(maxSize);
-    if ((size_t)rlen > rest)
-        rlen = rest;
-    rlen = procData(data, rlen);
-    if (rlen <= rest) {
-        pos += rlen;
-        rest -= rlen;
-    } else {
-        pos += rest;
-        rest = 0;
+    if (maxSize <= 0) {
+        return 0;
     }
+    size_t rlen = procData(data, maxSize);
     cout << "readData maxSize=" << maxSize
          << ", rlen=" << rlen
          << ", rest=" << rest
@@ -159,17 +199,44 @@ bool
 AudioSource::openFile(void)
 {
     clear();
-    int fd = ::open(fname.toStdString().c_str(), O_RDONLY);
-    if (fd < 0)
+    WAV wav;
+    string errmsg;
+    if (wav.open(fname.toStdString(), errmsg) == false) {
         return false;
-    struct stat st;
-    fstat(fd, &st);
-    len = st.st_size;
-    buf = new char[len];
-    ::read(fd, buf, len);
-    ::close(fd);
+    }
+    const WAVFmt& fmt = wav.getFmt();
+    cout << "type=" << fmt.type
+         << ", block_size=" << fmt.block_size
+         << ", data_bytes=" << wav.getDataBytes()
+         << endl;
+    if (fmt.nch != 1) {
+        cout << "not mono" << endl;
+        wav.close(errmsg);
+        return false;
+    }
+    bool ret = false;
+    switch (fmt.type) {
+    case WAVFmt::Type_pcm:
+        ret = read_linear(wav, errmsg);
+        break;
+    case WAVFmt::Type_mulaw :
+        ret = read_ulaw(wav, errmsg);
+        break;
+    default :
+        errmsg = "unsupported type";
+        break;
+    }
+    wav.close(errmsg);
+    if (ret == false)
+        return false;
     pos = buf;
     rest = len;
+    hz = fmt.samples_per_sec;
+    cout << "read len=" << len
+         << ", hz=" << hz
+         << endl;
+    if (codec != NULL)
+        codec->setHz(hz);
     return true;
 }
 
@@ -182,4 +249,44 @@ AudioSource::clear(void)
     pos = NULL;
     if (codec)
         codec->clear();
+    delete[] codec_rest;
+    codec_rest = NULL;
+    codec_rest_len = 0;
+}
+
+bool
+AudioSource::read_ulaw(WAV& wav, string& errmsg)
+{
+    const WAVFmt& fmt = wav.getFmt();
+    if (fmt.bits_per_sample != 8) {
+        errmsg = "ulaw bits must be 8";
+        return false;
+    }
+    int srclen = wav.getDataBytes();
+    char tmp[srclen];
+    wav.read(tmp, srclen);
+    len = srclen * 2;
+    buf = new char[len];
+    uint8_t* src_pos = (uint8_t*)tmp;
+    int16_t* dst_pos = (int16_t*)buf;
+    for (int i = 0; i < srclen; i++) {
+        *dst_pos = ulaw2linear(*src_pos);
+        dst_pos++;
+        src_pos++;
+    }
+    return true;
+}
+
+bool
+AudioSource::read_linear(WAV& wav, string& errmsg)
+{
+    const WAVFmt& fmt = wav.getFmt();
+    if (fmt.bits_per_sample != 16) {
+        errmsg = "pcm bits must be 16";
+        return false;
+    }
+    len = wav.getDataBytes();
+    buf = new char[len];
+    wav.read(buf, len);
+    return true;
 }

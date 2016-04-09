@@ -1,3 +1,6 @@
+#ifndef __WAV_HXX__
+#define __WAV_HXX__
+
 #include <string>
 using namespace std;
 
@@ -56,3 +59,5 @@ private:
     int fd;
     bool bWrite;
 };
+
+#endif // __WAV_HXX__

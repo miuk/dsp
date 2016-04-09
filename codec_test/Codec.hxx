@@ -10,6 +10,7 @@ public:
     virtual const char* getName(void) const = 0;
     virtual void init(void) = 0;
     virtual void clear(void) = 0;
+    virtual void setHz(int hz) = 0;
     virtual int getFrameSize(void) = 0;
     virtual int encode(const int16_t* src, int srclen, char* dst) = 0;
     virtual int decode(const char* src, int srclen, int16_t* dst) = 0;

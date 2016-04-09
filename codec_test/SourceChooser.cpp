@@ -41,7 +41,7 @@ SourceChooser::open()
     }
 
     QAudioFormat fmt;
-    fmt.setSampleRate(8000);
+    fmt.setSampleRate(src->getHz());
     fmt.setChannelCount(1);
     fmt.setSampleSize(16);
     fmt.setCodec("audio/pcm");

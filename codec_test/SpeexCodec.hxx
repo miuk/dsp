@@ -10,12 +10,12 @@ class SpeexCodec : public Codec {
 public:
     SpeexCodec(void);
     virtual ~SpeexCodec(void) {
-        delete[] rest;
         pthread_mutex_destroy(&mutex);
     };
     const char* getName(void) const;
     virtual void init(void);
     virtual void clear(void);
+    virtual void setHz(int hz);
     virtual int getFrameSize(void) { return frame_size; };
     virtual int encode(const int16_t* src, int srclen, char* dst);
     virtual int decode(const char* src, int srclen, int16_t* dst);
@@ -31,9 +31,8 @@ private:
     void* dec_state;
     SpeexBits dec_bits;
     int frame_size;
-    int16_t* rest;
-    int rest_len;
 
+    int hz;
     int quality;
     int xBR;
 

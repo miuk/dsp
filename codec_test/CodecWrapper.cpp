@@ -61,6 +61,12 @@ CodecWrapper::clear(void)
     curCodec->clear();
 }
 
+void
+CodecWrapper::setHz(int hz)
+{
+    curCodec->setHz(hz);
+}
+
 int
 CodecWrapper::getFrameSize(void)
 {

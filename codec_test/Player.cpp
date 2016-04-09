@@ -142,6 +142,7 @@ Player::startAudio(void)
     bPaused = false;
     setPaused(bPaused);
     src->reset();
+    //audio->setBufferSize(128000);
     audio->start(src);
 }
 
