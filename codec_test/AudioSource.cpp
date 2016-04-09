@@ -13,6 +13,7 @@ AudioSource::AudioSource(void)
     buf = NULL;
     len = 0;
     pos = NULL;
+    bps = 0;
     codec = NULL;
     codec_rest = NULL;
     codec_rest_len = 0;
@@ -153,22 +154,17 @@ AudioSource::procData(char* dst, size_t len)
         rlen -= frame_size;
     if (rlen > len) {
         char buf[rlen];
-        codec->codec((int16_t*)pos, rlen/2, (int16_t*)buf);
+        codec->codec((int16_t*)pos, rlen/2, (int16_t*)buf, bps);
         memcpy(dst, buf, len);
         codec_rest_len = rlen - len;
         codec_rest = new char[codec_rest_len];
         memcpy(codec_rest, buf + len, codec_rest_len);
     } else {
-        codec->codec((int16_t*)pos, rlen/2, (int16_t*)dst);
-    }
+        codec->codec((int16_t*)pos, rlen/2, (int16_t*)dst, bps);
+    }    
     last_len += len;
     pos += rlen;
     rest -= rlen;
-    cout << "last_len=" << last_len
-         << ", rlen=" << rlen
-         << ", len=" << len
-         << ", codec_rest_len=" << codec_rest_len
-         << endl;
     return last_len;
 }
 
@@ -188,10 +184,6 @@ AudioSource::readData(char* data, qint64 maxSize)
         return 0;
     }
     size_t rlen = procData(data, maxSize);
-    cout << "readData maxSize=" << maxSize
-         << ", rlen=" << rlen
-         << ", rest=" << rest
-         << endl;
     return rlen;
 };
 
@@ -204,7 +196,7 @@ AudioSource::openFile(void)
     if (wav.open(fname.toStdString(), errmsg) == false) {
         return false;
     }
-    const WAVFmt& fmt = wav.getFmt();
+    fmt = wav.getFmt();
     cout << "type=" << fmt.type
          << ", block_size=" << fmt.block_size
          << ", data_bytes=" << wav.getDataBytes()
@@ -231,12 +223,13 @@ AudioSource::openFile(void)
         return false;
     pos = buf;
     rest = len;
-    hz = fmt.samples_per_sec;
     cout << "read len=" << len
-         << ", hz=" << hz
+         << ", hz=" << getHz()
          << endl;
-    if (codec != NULL)
-        codec->setHz(hz);
+    if (codec != NULL) {
+        codec->setWAVFmtType(fmt.type);
+        codec->setHz(getHz());
+    }
     return true;
 }
 
@@ -257,7 +250,6 @@ AudioSource::clear(void)
 bool
 AudioSource::read_ulaw(WAV& wav, string& errmsg)
 {
-    const WAVFmt& fmt = wav.getFmt();
     if (fmt.bits_per_sample != 8) {
         errmsg = "ulaw bits must be 8";
         return false;
@@ -280,7 +272,6 @@ AudioSource::read_ulaw(WAV& wav, string& errmsg)
 bool
 AudioSource::read_linear(WAV& wav, string& errmsg)
 {
-    const WAVFmt& fmt = wav.getFmt();
     if (fmt.bits_per_sample != 16) {
         errmsg = "pcm bits must be 16";
         return false;
@@ -289,4 +280,24 @@ AudioSource::read_linear(WAV& wav, string& errmsg)
     buf = new char[len];
     wav.read(buf, len);
     return true;
+}
+
+QString
+AudioSource::getTypeStr(void) const
+{
+    switch (fmt.type) {
+    case WAVFmt::Type_pcm:
+        return "PCM";
+    case WAVFmt::Type_mulaw :
+        return "u-law";
+    default :
+        return "unknown";
+        break;
+    }
+}
+
+int
+AudioSource::getLengthSec(void) const
+{
+    return len / sizeof(int16_t) / fmt.samples_per_sec;
 }

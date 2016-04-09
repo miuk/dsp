@@ -1,6 +1,12 @@
 #include "NullCodec.hxx"
+#include "wav.hxx"
 
 #include <string.h>
+NullCodec::NullCodec(void)
+{
+    hz = 0;
+    type = WAVFmt::Type_pcm;
+}
 
 const char*
 NullCodec::getName(void) const
@@ -36,9 +42,12 @@ NullCodec::decode(const char* src, int srclen, int16_t* dst)
 }
 
 int
-NullCodec::codec(const int16_t* src, int srclen, int16_t* dst)
+NullCodec::codec(const int16_t* src, int srclen, int16_t* dst, int& bps)
 {
     int len = sizeof(*src) * srclen;
     memcpy(dst, src, len);
+    bps = hz * 8;
+    if (type != WAVFmt::Type_mulaw)
+        bps *= 2;
     return srclen;
 }

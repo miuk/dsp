@@ -1,4 +1,5 @@
 #include "Player.hxx"
+#include "AudioSource.hxx"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -17,13 +18,15 @@ Player::Player(QWidget* parent)
     src = NULL;
     audio = NULL;
     volume = 10;
+    elapsedSec = 0;
     layout = new QVBoxLayout(parent);
     QHBoxLayout* h = new QHBoxLayout(parent);
     layout->addLayout(h);
 
     // source name label
     QLabel* l = new QLabel(parent);
-    connect(this, SIGNAL(setName(const QString&))
+    l->setFont(QFont("Courier"));
+    connect(this, SIGNAL(showElapsed(const QString&))
             , l, SLOT(setText(const QString&)));
     h->addWidget(l);
 
@@ -75,6 +78,7 @@ Player::Player(QWidget* parent)
         h->addWidget(cb);
     }
     setEnabled(false);
+    resetElapsed();
 }
 
 Player::~Player(void)
@@ -119,7 +123,6 @@ Player::setSource(const QString& name
     this->fmt = fmt;
     this->name = name;
     this->src = src;
-    setName(name);
     startAudio();
     return true;
 }
@@ -142,7 +145,9 @@ Player::startAudio(void)
     bPaused = false;
     setPaused(bPaused);
     src->reset();
-    //audio->setBufferSize(128000);
+    audio->setNotifyInterval(1000);
+    connect(audio, SIGNAL(notify()), this, SLOT(elapsed()));
+    resetElapsed();
     audio->start(src);
 }
 
@@ -223,4 +228,23 @@ Player::onAudioStateChanged(QAudio::State state)
         }
         break;
     }
+}
+
+void
+Player::elapsed(void)
+{
+    elapsedSec++;
+    int min = elapsedSec / 60;
+    int sec = elapsedSec % 60;
+    int bps = ((AudioSource*)src)->getBps();
+    char buf[64];
+    sprintf(buf, "%02d:%02d %5.1f kbps", min, sec, bps/1000.0);
+    showElapsed(QString(buf));
+}
+
+void
+Player::resetElapsed(void)
+{
+    elapsedSec = 0;
+    showElapsed("00:00   0.0 kbps");
 }

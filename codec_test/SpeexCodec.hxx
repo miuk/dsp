@@ -16,10 +16,11 @@ public:
     virtual void init(void);
     virtual void clear(void);
     virtual void setHz(int hz);
+    virtual void setWAVFmtType(int) {};
     virtual int getFrameSize(void) { return frame_size; };
     virtual int encode(const int16_t* src, int srclen, char* dst);
     virtual int decode(const char* src, int srclen, int16_t* dst);
-    virtual int codec(const int16_t* src, int srclen, int16_t* dst);
+    virtual int codec(const int16_t* src, int srclen, int16_t* dst, int& bps);
 
     void setQuality(int value);
     void setXBR(int value);

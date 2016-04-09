@@ -20,6 +20,8 @@ signals:
                       , QIODevice* src);
 private slots:
     void open();
+signals:
+    void setInfo(const QString&);
 
 private:
     QWidget* parent;

@@ -23,15 +23,17 @@ private slots:
     void onStopClicked();
     void onDeviceChanged(const QString& name);
     void onAudioStateChanged(QAudio::State state);
+    void elapsed(void);
 
 signals:
-    void setName(const QString& name);
+    void showElapsed(const QString& name);
     void setEnabled(bool);
     void setPaused(bool val);
 
 private:
     void startAudio(void);
     void stopAudio(void);
+    void resetElapsed(void);
 
 private:
     QBoxLayout* layout;
@@ -47,4 +49,6 @@ private:
     int volume;
     QString devName;
     bool bPaused;
+
+    int elapsedSec;
 };

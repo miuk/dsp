@@ -64,7 +64,21 @@ CodecWrapper::clear(void)
 void
 CodecWrapper::setHz(int hz)
 {
-    curCodec->setHz(hz);
+    for (vector<Codec*>::iterator i = codecs.begin();
+         i != codecs.end(); i++) {
+        Codec* codec = *i;
+        codec->setHz(hz);
+    }
+}
+
+void
+CodecWrapper::setWAVFmtType(int type)
+{
+    for (vector<Codec*>::iterator i = codecs.begin();
+         i != codecs.end(); i++) {
+        Codec* codec = *i;
+        codec->setWAVFmtType(type);
+    }
 }
 
 int
@@ -86,7 +100,7 @@ CodecWrapper::decode(const char* src, int srclen, int16_t* dst)
 }
 
 int
-CodecWrapper::codec(const int16_t* src, int srclen, int16_t* dst)
+CodecWrapper::codec(const int16_t* src, int srclen, int16_t* dst, int& bps)
 {
-    return curCodec->codec(src, srclen, dst);
+    return curCodec->codec(src, srclen, dst, bps);
 }

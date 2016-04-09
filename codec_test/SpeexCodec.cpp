@@ -184,7 +184,7 @@ SpeexCodec::decode(const char* src, int srclen, int16_t* dst)
 }
 
 int
-SpeexCodec::codec(const int16_t* src, int srclen, int16_t* dst)
+SpeexCodec::codec(const int16_t* src, int srclen, int16_t* dst, int& bps)
 {
     int n = srclen / frame_size;
     int16_t buf[srclen];
@@ -210,12 +210,14 @@ SpeexCodec::codec(const int16_t* src, int srclen, int16_t* dst)
         dst_pos += frame_size;
     }
     pthread_mutex_unlock(&mutex);
-    int bps = (srclen > 0) ? (hz * 8 * enclen / srclen) : 0;
+    bps = (srclen > 0) ? (hz * 8 * enclen / srclen) : 0;
+    /*
     cout << "SpeexCodec::codec"
          << ", srclen=" << srclen
          << ", dstlen=" << dstlen
          << ", enclen=" << enclen
          << ", bps=" << bps
          << endl;
+    */
     return dstlen;
 }

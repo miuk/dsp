@@ -13,10 +13,11 @@ public:
     virtual void init(void);
     virtual void clear(void);
     virtual void setHz(int hz);
+    virtual void setWAVFmtType(int type);
     virtual int getFrameSize(void);
     virtual int encode(const int16_t* src, int srclen, char* dst);
     virtual int decode(const char* src, int srclen, int16_t* dst);
-    virtual int codec(const int16_t* src, int srclen, int16_t* dst);
+    virtual int codec(const int16_t* src, int srclen, int16_t* dst, int& bps);
     void addCodec(Codec* codec);
     void setCodec(int num);
     int getCurCodecNum(void) const { return curCodecNum; };

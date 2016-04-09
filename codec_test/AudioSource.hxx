@@ -21,7 +21,11 @@ public:
     virtual qint64 writeData(const char*, qint64);
     void setFileName(const QString& fname) { this->fname = fname; };
     void setCodec(Codec* codec) { this->codec = codec; };
-    int getHz(void) const { return hz; };
+    int getHz(void) const { return fmt.samples_per_sec; };
+    WAVFmt::Type getType(void) const { return fmt.type; };
+    QString getTypeStr(void) const;
+    int getLengthSec(void) const;
+    int getBps(void) const { return bps; };
 protected:
     qint64 readData(char* data, qint64 maxSize);
 private:
@@ -33,11 +37,12 @@ private:
     bool read_ulaw(WAV& wav, string& errmsg);
 private:
     QString fname;
-    int hz;
+    WAVFmt fmt;
     char* buf;
     size_t len;
     const char* pos;
     size_t rest;
+    int bps;
     Codec* codec;
     char* codec_rest;
     int codec_rest_len;
