@@ -12,10 +12,10 @@ MAKEFILE      = Makefile
 
 CC            = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
 CXX           = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
-DEFINES       = -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
+DEFINES       = -DUSE_G729 -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -O2 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk -mmacosx-version-min=10.7 -Wall -W -fPIC $(DEFINES)
 CXXFLAGS      = -pipe -stdlib=libc++ -O2 -std=gnu++11 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk -mmacosx-version-min=10.7 -Wall -W -fPIC $(DEFINES)
-INCPATH       = -I. -I. -I.. -I/usr/local/include -I../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I../../../../Qt/5.6/clang_64/lib/QtGui.framework/Headers -I../../../../Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I../../../../Qt/5.6/clang_64/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/AGL.framework/Headers -I../../../../Qt/5.6/clang_64/mkspecs/macx-clang -F/Users/kenji/Qt/5.6/clang_64/lib
+INCPATH       = -I. -I. -I.. -I/usr/local/include -I../g729a -I../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I../../../../Qt/5.6/clang_64/lib/QtGui.framework/Headers -I../../../../Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I../../../../Qt/5.6/clang_64/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/AGL.framework/Headers -I../../../../Qt/5.6/clang_64/mkspecs/macx-clang -F/Users/kenji/Qt/5.6/clang_64/lib
 QMAKE         = /Users/kenji/Qt/5.6/clang_64/bin/qmake
 DEL_FILE      = rm -f
 CHK_DIR_EXISTS= test -d
@@ -36,7 +36,7 @@ DISTNAME      = codec_test1.0.0
 DISTDIR = /Users/kenji/src/github/dsp/codec_test/.tmp/codec_test1.0.0
 LINK          = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
 LFLAGS        = -headerpad_max_install_names -stdlib=libc++ -Wl,-syslibroot,/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk -mmacosx-version-min=10.7 -Wl,-rpath,/Users/kenji/Qt/5.6/clang_64/lib
-LIBS          = $(SUBLIBS) -L/usr/local/lib -F/Users/kenji/Qt/5.6/clang_64/lib -lspeex -lopus -framework QtWidgets -framework QtMultimedia -framework QtGui -framework QtNetwork -framework QtCore -framework OpenGL -framework AGL 
+LIBS          = $(SUBLIBS) -L/usr/local/lib -L../g729a -F/Users/kenji/Qt/5.6/clang_64/lib -lspeex -lopus -lg729a -framework QtWidgets -framework QtMultimedia -framework QtGui -framework QtNetwork -framework QtCore -framework OpenGL -framework AGL 
 AR            = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar cq
 RANLIB        = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib -s
 SED           = sed
@@ -61,7 +61,8 @@ SOURCES       = Hello.cpp \
 		../ulaw.c \
 		OpusCodec.cpp \
 		OpusOptionSetting.cpp \
-		ULawCodec.cpp moc_Player.cpp \
+		ULawCodec.cpp \
+		G729aCodec.cpp moc_Player.cpp \
 		moc_SourceChooser.cpp \
 		moc_SpeexOptionSetting.cpp \
 		moc_CodecChooser.cpp \
@@ -80,6 +81,7 @@ OBJECTS       = Hello.o \
 		OpusCodec.o \
 		OpusOptionSetting.o \
 		ULawCodec.o \
+		G729aCodec.o \
 		moc_Player.o \
 		moc_SourceChooser.o \
 		moc_SpeexOptionSetting.o \
@@ -234,7 +236,8 @@ DIST          = ../../../../Qt/5.6/clang_64/mkspecs/features/spec_pre.prf \
 		CodecChooser.hxx \
 		OpusCodec.hxx \
 		OpusOptionSetting.hxx \
-		ULawCodec.hxx Hello.cpp \
+		ULawCodec.hxx \
+		G729aCodec.hxx Hello.cpp \
 		Player.cpp \
 		AudioSource.cpp \
 		SourceChooser.cpp \
@@ -247,7 +250,8 @@ DIST          = ../../../../Qt/5.6/clang_64/mkspecs/features/spec_pre.prf \
 		../ulaw.c \
 		OpusCodec.cpp \
 		OpusOptionSetting.cpp \
-		ULawCodec.cpp
+		ULawCodec.cpp \
+		G729aCodec.cpp
 QMAKE_TARGET  = codec_test
 DESTDIR       = 
 TARGET        = codec_test.app/Contents/MacOS/codec_test
@@ -582,8 +586,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents Player.hxx AudioSource.hxx SourceChooser.hxx SpeexOptionSetting.hxx NullCodec.hxx CodecWrapper.hxx CodecChooser.hxx OpusCodec.hxx OpusOptionSetting.hxx ULawCodec.hxx $(DISTDIR)/
-	$(COPY_FILE) --parents Hello.cpp Player.cpp AudioSource.cpp SourceChooser.cpp SpeexOptionSetting.cpp SpeexCodec.cpp NullCodec.cpp CodecWrapper.cpp CodecChooser.cpp ../wav.cpp ../ulaw.c OpusCodec.cpp OpusOptionSetting.cpp ULawCodec.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents Player.hxx AudioSource.hxx SourceChooser.hxx SpeexOptionSetting.hxx NullCodec.hxx CodecWrapper.hxx CodecChooser.hxx OpusCodec.hxx OpusOptionSetting.hxx ULawCodec.hxx G729aCodec.hxx $(DISTDIR)/
+	$(COPY_FILE) --parents Hello.cpp Player.cpp AudioSource.cpp SourceChooser.cpp SpeexOptionSetting.cpp SpeexCodec.cpp NullCodec.cpp CodecWrapper.cpp CodecChooser.cpp ../wav.cpp ../ulaw.c OpusCodec.cpp OpusOptionSetting.cpp ULawCodec.cpp G729aCodec.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -621,7 +625,7 @@ moc_Player.cpp: ../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QWid
 		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/QAudioOutput \
 		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/qaudiooutput.h \
 		Player.hxx
-	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib Player.hxx -o moc_Player.cpp
+	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/src/github/dsp/g729a -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib Player.hxx -o moc_Player.cpp
 
 moc_SourceChooser.cpp: ../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QWidget \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qwidget.h \
@@ -633,7 +637,7 @@ moc_SourceChooser.cpp: ../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Heade
 		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/qaudioformat.h \
 		Codec.hxx \
 		SourceChooser.hxx
-	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib SourceChooser.hxx -o moc_SourceChooser.cpp
+	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/src/github/dsp/g729a -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib SourceChooser.hxx -o moc_SourceChooser.cpp
 
 moc_SpeexOptionSetting.cpp: ../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QWidget \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qwidget.h \
@@ -646,7 +650,7 @@ moc_SpeexOptionSetting.cpp: ../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/
 		/usr/local/include/speex/speex_types.h \
 		/usr/local/include/speex/speex_config_types.h \
 		SpeexOptionSetting.hxx
-	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib SpeexOptionSetting.hxx -o moc_SpeexOptionSetting.cpp
+	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/src/github/dsp/g729a -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib SpeexOptionSetting.hxx -o moc_SpeexOptionSetting.cpp
 
 moc_CodecChooser.cpp: CodecWrapper.hxx \
 		Codec.hxx \
@@ -655,7 +659,7 @@ moc_CodecChooser.cpp: CodecWrapper.hxx \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QLayout \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qlayout.h \
 		CodecChooser.hxx
-	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib CodecChooser.hxx -o moc_CodecChooser.cpp
+	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/src/github/dsp/g729a -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib CodecChooser.hxx -o moc_CodecChooser.cpp
 
 moc_OpusOptionSetting.cpp: ../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QWidget \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qwidget.h \
@@ -669,7 +673,7 @@ moc_OpusOptionSetting.cpp: ../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/H
 		/usr/local/include/opus/opus_types.h \
 		/usr/local/include/opus/opus_defines.h \
 		OpusOptionSetting.hxx
-	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib OpusOptionSetting.hxx -o moc_OpusOptionSetting.cpp
+	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/src/github/dsp/g729a -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib OpusOptionSetting.hxx -o moc_OpusOptionSetting.cpp
 
 compiler_moc_source_make_all: Hello.moc
 compiler_moc_source_clean:
@@ -703,6 +707,7 @@ Hello.moc: Player.hxx \
 		/usr/local/include/opus/opus_types.h \
 		/usr/local/include/opus/opus_defines.h \
 		ULawCodec.hxx \
+		G729aCodec.hxx \
 		CodecWrapper.hxx \
 		CodecChooser.hxx \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QApplication \
@@ -728,7 +733,7 @@ Hello.moc: Player.hxx \
 		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/QMediaPlayer \
 		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/qmediaplayer.h \
 		Hello.cpp
-	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib Hello.cpp -o Hello.moc
+	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/src/github/dsp/g729a -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib Hello.cpp -o Hello.moc
 
 compiler_uic_make_all:
 compiler_uic_clean:
@@ -773,6 +778,7 @@ Hello.o: Hello.cpp Player.hxx \
 		/usr/local/include/opus/opus_types.h \
 		/usr/local/include/opus/opus_defines.h \
 		ULawCodec.hxx \
+		G729aCodec.hxx \
 		CodecWrapper.hxx \
 		CodecChooser.hxx \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QApplication \
@@ -973,6 +979,13 @@ ULawCodec.o: ULawCodec.cpp ULawCodec.hxx \
 		Codec.hxx \
 		../ulaw.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ULawCodec.o ULawCodec.cpp
+
+G729aCodec.o: G729aCodec.cpp G729aCodec.hxx \
+		Codec.hxx \
+		../g729a/typedef.h \
+		../g729a/basic_op.h \
+		../g729a/ld8a.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o G729aCodec.o G729aCodec.cpp
 
 moc_Player.o: moc_Player.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_Player.o moc_Player.cpp

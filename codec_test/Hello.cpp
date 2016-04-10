@@ -6,6 +6,9 @@
 #include "OpusOptionSetting.hxx"
 #include "OpusCodec.hxx"
 #include "ULawCodec.hxx"
+#ifdef USE_G729
+#include "G729aCodec.hxx"
+#endif
 #include "CodecWrapper.hxx"
 #include "CodecChooser.hxx"
 
@@ -42,6 +45,9 @@ private:
     QVBoxLayout* v;
     CodecWrapper* codec;
     ULawCodec* ulawCodec;
+#ifdef USE_G729
+    G729aCodec* g729aCodec;
+#endif
     SpeexCodec* spxCodec;
     OpusCodec* opsCodec;
 };
@@ -60,6 +66,10 @@ MyApp::init(void)
     codec = new CodecWrapper();
     ulawCodec = new ULawCodec();
     codec->addCodec(ulawCodec);
+#ifdef USE_G729
+    g729aCodec = new G729aCodec();
+    codec->addCodec(g729aCodec);
+#endif
     spxCodec = new SpeexCodec();
     codec->addCodec(spxCodec);
     opsCodec = new OpusCodec();
@@ -77,7 +87,10 @@ MyApp::init(void)
     gb->setLayout(cc->getLayout());
     v->addWidget(gb);
     cc->addCodecOptionSetter(NULL); // for null codec
-    cc->addCodecOptionSetter(NULL); // for null ulaw
+    cc->addCodecOptionSetter(NULL); // for ulaw
+#ifdef USE_G729
+    cc->addCodecOptionSetter(NULL); // for g729a
+#endif
 
     gb = new QGroupBox("speex");
     SpeexOptionSetting* spx = new SpeexOptionSetting(this, spxCodec);
