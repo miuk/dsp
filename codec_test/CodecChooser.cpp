@@ -34,8 +34,22 @@ CodecChooser::~CodecChooser(void)
 void
 CodecChooser::onCodecToggled(int id, bool state)
 {
-    if (state == false)
+    QWidget* setter = NULL;
+    if (id < (int)optionSetters.size())
+        setter = optionSetters[id];
+    if (state == false) {
+        if (setter != NULL)
+            setter->setVisible(false);
         return;
+    }
     codec->setCodec(id);
     chooseCodec(id);
+    if (setter != NULL)
+        setter->setVisible(true);
+}
+
+void
+CodecChooser::addCodecOptionSetter(QWidget* setter)
+{
+    optionSetters.push_back(setter);
 }

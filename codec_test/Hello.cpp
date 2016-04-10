@@ -3,6 +3,9 @@
 #include "SourceChooser.hxx"
 #include "SpeexOptionSetting.hxx"
 #include "SpeexCodec.hxx"
+#include "OpusOptionSetting.hxx"
+#include "OpusCodec.hxx"
+#include "ULawCodec.hxx"
 #include "CodecWrapper.hxx"
 #include "CodecChooser.hxx"
 
@@ -38,7 +41,9 @@ private:
     QApplication* app;
     QVBoxLayout* v;
     CodecWrapper* codec;
+    ULawCodec* ulawCodec;
     SpeexCodec* spxCodec;
+    OpusCodec* opsCodec;
 };
 
 
@@ -53,8 +58,12 @@ MyApp::init(void)
     v->addWidget(gb);
 
     codec = new CodecWrapper();
+    ulawCodec = new ULawCodec();
+    codec->addCodec(ulawCodec);
     spxCodec = new SpeexCodec();
     codec->addCodec(spxCodec);
+    opsCodec = new OpusCodec();
+    codec->addCodec(opsCodec);
     
     gb = new QGroupBox("source");
     SourceChooser* chooser = new SourceChooser(this, codec);
@@ -67,11 +76,24 @@ MyApp::init(void)
     CodecChooser* cc = new CodecChooser(this, codec);
     gb->setLayout(cc->getLayout());
     v->addWidget(gb);
+    cc->addCodecOptionSetter(NULL); // for null codec
+    cc->addCodecOptionSetter(NULL); // for null ulaw
 
     gb = new QGroupBox("speex");
     SpeexOptionSetting* spx = new SpeexOptionSetting(this, spxCodec);
     gb->setLayout(spx->getLayout());
+    gb->setVisible(false);
     v->addWidget(gb);
+    cc->addCodecOptionSetter(gb);
+
+    gb = new QGroupBox("opus");
+    OpusOptionSetting* ops = new OpusOptionSetting(this, opsCodec);
+    gb->setLayout(ops->getLayout());
+    gb->setVisible(false);
+    v->addWidget(gb);
+    cc->addCodecOptionSetter(gb);
+    connect(chooser, SIGNAL(chooseSource(const QString&, const QAudioFormat&, QIODevice*))
+            , ops, SLOT(chooseSource(const QString&, const QAudioFormat&, QIODevice*)));
 
     setLayout(v);
 }

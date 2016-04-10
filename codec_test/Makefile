@@ -36,7 +36,7 @@ DISTNAME      = codec_test1.0.0
 DISTDIR = /Users/kenji/src/github/dsp/codec_test/.tmp/codec_test1.0.0
 LINK          = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
 LFLAGS        = -headerpad_max_install_names -stdlib=libc++ -Wl,-syslibroot,/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk -mmacosx-version-min=10.7 -Wl,-rpath,/Users/kenji/Qt/5.6/clang_64/lib
-LIBS          = $(SUBLIBS) -L/usr/local/lib -F/Users/kenji/Qt/5.6/clang_64/lib -lspeex -framework QtWidgets -framework QtMultimedia -framework QtGui -framework QtNetwork -framework QtCore -framework OpenGL -framework AGL 
+LIBS          = $(SUBLIBS) -L/usr/local/lib -F/Users/kenji/Qt/5.6/clang_64/lib -lspeex -lopus -framework QtWidgets -framework QtMultimedia -framework QtGui -framework QtNetwork -framework QtCore -framework OpenGL -framework AGL 
 AR            = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar cq
 RANLIB        = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib -s
 SED           = sed
@@ -58,10 +58,14 @@ SOURCES       = Hello.cpp \
 		CodecWrapper.cpp \
 		CodecChooser.cpp \
 		../wav.cpp \
-		../ulaw.c moc_Player.cpp \
+		../ulaw.c \
+		OpusCodec.cpp \
+		OpusOptionSetting.cpp \
+		ULawCodec.cpp moc_Player.cpp \
 		moc_SourceChooser.cpp \
 		moc_SpeexOptionSetting.cpp \
-		moc_CodecChooser.cpp
+		moc_CodecChooser.cpp \
+		moc_OpusOptionSetting.cpp
 OBJECTS       = Hello.o \
 		Player.o \
 		AudioSource.o \
@@ -73,10 +77,14 @@ OBJECTS       = Hello.o \
 		CodecChooser.o \
 		wav.o \
 		ulaw.o \
+		OpusCodec.o \
+		OpusOptionSetting.o \
+		ULawCodec.o \
 		moc_Player.o \
 		moc_SourceChooser.o \
 		moc_SpeexOptionSetting.o \
-		moc_CodecChooser.o
+		moc_CodecChooser.o \
+		moc_OpusOptionSetting.o
 DIST          = ../../../../Qt/5.6/clang_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt/5.6/clang_64/mkspecs/qdevice.pri \
 		../../../../Qt/5.6/clang_64/mkspecs/features/device_config.prf \
@@ -223,7 +231,10 @@ DIST          = ../../../../Qt/5.6/clang_64/mkspecs/features/spec_pre.prf \
 		SpeexOptionSetting.hxx \
 		NullCodec.hxx \
 		CodecWrapper.hxx \
-		CodecChooser.hxx Hello.cpp \
+		CodecChooser.hxx \
+		OpusCodec.hxx \
+		OpusOptionSetting.hxx \
+		ULawCodec.hxx Hello.cpp \
 		Player.cpp \
 		AudioSource.cpp \
 		SourceChooser.cpp \
@@ -233,7 +244,10 @@ DIST          = ../../../../Qt/5.6/clang_64/mkspecs/features/spec_pre.prf \
 		CodecWrapper.cpp \
 		CodecChooser.cpp \
 		../wav.cpp \
-		../ulaw.c
+		../ulaw.c \
+		OpusCodec.cpp \
+		OpusOptionSetting.cpp \
+		ULawCodec.cpp
 QMAKE_TARGET  = codec_test
 DESTDIR       = 
 TARGET        = codec_test.app/Contents/MacOS/codec_test
@@ -568,8 +582,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents Player.hxx AudioSource.hxx SourceChooser.hxx SpeexOptionSetting.hxx NullCodec.hxx CodecWrapper.hxx CodecChooser.hxx $(DISTDIR)/
-	$(COPY_FILE) --parents Hello.cpp Player.cpp AudioSource.cpp SourceChooser.cpp SpeexOptionSetting.cpp SpeexCodec.cpp NullCodec.cpp CodecWrapper.cpp CodecChooser.cpp ../wav.cpp ../ulaw.c $(DISTDIR)/
+	$(COPY_FILE) --parents Player.hxx AudioSource.hxx SourceChooser.hxx SpeexOptionSetting.hxx NullCodec.hxx CodecWrapper.hxx CodecChooser.hxx OpusCodec.hxx OpusOptionSetting.hxx ULawCodec.hxx $(DISTDIR)/
+	$(COPY_FILE) --parents Hello.cpp Player.cpp AudioSource.cpp SourceChooser.cpp SpeexOptionSetting.cpp SpeexCodec.cpp NullCodec.cpp CodecWrapper.cpp CodecChooser.cpp ../wav.cpp ../ulaw.c OpusCodec.cpp OpusOptionSetting.cpp ULawCodec.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -593,9 +607,9 @@ check: first
 
 compiler_rcc_make_all:
 compiler_rcc_clean:
-compiler_moc_header_make_all: moc_Player.cpp moc_SourceChooser.cpp moc_SpeexOptionSetting.cpp moc_CodecChooser.cpp
+compiler_moc_header_make_all: moc_Player.cpp moc_SourceChooser.cpp moc_SpeexOptionSetting.cpp moc_CodecChooser.cpp moc_OpusOptionSetting.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_Player.cpp moc_SourceChooser.cpp moc_SpeexOptionSetting.cpp moc_CodecChooser.cpp
+	-$(DEL_FILE) moc_Player.cpp moc_SourceChooser.cpp moc_SpeexOptionSetting.cpp moc_CodecChooser.cpp moc_OpusOptionSetting.cpp
 moc_Player.cpp: ../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QWidget \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qwidget.h \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QBoxLayout \
@@ -643,6 +657,20 @@ moc_CodecChooser.cpp: CodecWrapper.hxx \
 		CodecChooser.hxx
 	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib CodecChooser.hxx -o moc_CodecChooser.cpp
 
+moc_OpusOptionSetting.cpp: ../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QWidget \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qwidget.h \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QLayout \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qlayout.h \
+		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/QAudioFormat \
+		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/qaudioformat.h \
+		OpusCodec.hxx \
+		Codec.hxx \
+		/usr/local/include/opus/opus.h \
+		/usr/local/include/opus/opus_types.h \
+		/usr/local/include/opus/opus_defines.h \
+		OpusOptionSetting.hxx
+	/Users/kenji/Qt/5.6/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/kenji/Qt/5.6/clang_64/mkspecs/macx-clang -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp/codec_test -I/Users/kenji/src/github/dsp -I/usr/local/include -I/Users/kenji/Qt/5.6/clang_64/lib/QtWidgets.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtGui.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtNetwork.framework/Headers -I/Users/kenji/Qt/5.6/clang_64/lib/QtCore.framework/Headers -F/Users/kenji/Qt/5.6/clang_64/lib OpusOptionSetting.hxx -o moc_OpusOptionSetting.cpp
+
 compiler_moc_source_make_all: Hello.moc
 compiler_moc_source_clean:
 	-$(DEL_FILE) Hello.moc
@@ -669,6 +697,12 @@ Hello.moc: Player.hxx \
 		/usr/local/include/speex/speex_bits.h \
 		/usr/local/include/speex/speex_types.h \
 		/usr/local/include/speex/speex_config_types.h \
+		OpusOptionSetting.hxx \
+		OpusCodec.hxx \
+		/usr/local/include/opus/opus.h \
+		/usr/local/include/opus/opus_types.h \
+		/usr/local/include/opus/opus_defines.h \
+		ULawCodec.hxx \
 		CodecWrapper.hxx \
 		CodecChooser.hxx \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QApplication \
@@ -733,6 +767,12 @@ Hello.o: Hello.cpp Player.hxx \
 		/usr/local/include/speex/speex_bits.h \
 		/usr/local/include/speex/speex_types.h \
 		/usr/local/include/speex/speex_config_types.h \
+		OpusOptionSetting.hxx \
+		OpusCodec.hxx \
+		/usr/local/include/opus/opus.h \
+		/usr/local/include/opus/opus_types.h \
+		/usr/local/include/opus/opus_defines.h \
+		ULawCodec.hxx \
 		CodecWrapper.hxx \
 		CodecChooser.hxx \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QApplication \
@@ -771,6 +811,9 @@ Player.o: Player.cpp Player.hxx \
 		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/qaudioformat.h \
 		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/QAudioOutput \
 		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/qaudiooutput.h \
+		AudioSource.hxx \
+		Codec.hxx \
+		../wav.hxx \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QVBoxLayout \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QHBoxLayout \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QLabel \
@@ -816,6 +859,8 @@ SourceChooser.o: SourceChooser.cpp SourceChooser.hxx \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QHBoxLayout \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QPushButton \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qpushbutton.h \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QLabel \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qlabel.h \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QFileDialog \
 		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qfiledialog.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SourceChooser.o SourceChooser.cpp
@@ -854,7 +899,8 @@ SpeexCodec.o: SpeexCodec.cpp SpeexCodec.hxx \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SpeexCodec.o SpeexCodec.cpp
 
 NullCodec.o: NullCodec.cpp NullCodec.hxx \
-		Codec.hxx
+		Codec.hxx \
+		../wav.hxx
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o NullCodec.o NullCodec.cpp
 
 CodecWrapper.o: CodecWrapper.cpp CodecWrapper.hxx \
@@ -890,6 +936,44 @@ wav.o: ../wav.cpp ../wav.hxx
 ulaw.o: ../ulaw.c ../ulaw.h
 	$(CC) -c $(CFLAGS) $(INCPATH) -o ulaw.o ../ulaw.c
 
+OpusCodec.o: OpusCodec.cpp OpusCodec.hxx \
+		Codec.hxx \
+		/usr/local/include/opus/opus.h \
+		/usr/local/include/opus/opus_types.h \
+		/usr/local/include/opus/opus_defines.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o OpusCodec.o OpusCodec.cpp
+
+OpusOptionSetting.o: OpusOptionSetting.cpp OpusOptionSetting.hxx \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QWidget \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qwidget.h \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QLayout \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qlayout.h \
+		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/QAudioFormat \
+		../../../../Qt/5.6/clang_64/lib/QtMultimedia.framework/Headers/qaudioformat.h \
+		OpusCodec.hxx \
+		Codec.hxx \
+		/usr/local/include/opus/opus.h \
+		/usr/local/include/opus/opus_types.h \
+		/usr/local/include/opus/opus_defines.h \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QFormLayout \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qformlayout.h \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QHBoxLayout \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qboxlayout.h \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QRadioButton \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qradiobutton.h \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QButtonGroup \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qbuttongroup.h \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QLabel \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qlabel.h \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/QSlider \
+		../../../../Qt/5.6/clang_64/lib/QtWidgets.framework/Headers/qslider.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o OpusOptionSetting.o OpusOptionSetting.cpp
+
+ULawCodec.o: ULawCodec.cpp ULawCodec.hxx \
+		Codec.hxx \
+		../ulaw.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ULawCodec.o ULawCodec.cpp
+
 moc_Player.o: moc_Player.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_Player.o moc_Player.cpp
 
@@ -901,6 +985,9 @@ moc_SpeexOptionSetting.o: moc_SpeexOptionSetting.cpp
 
 moc_CodecChooser.o: moc_CodecChooser.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_CodecChooser.o moc_CodecChooser.cpp
+
+moc_OpusOptionSetting.o: moc_OpusOptionSetting.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_OpusOptionSetting.o moc_OpusOptionSetting.cpp
 
 ####### Install
 

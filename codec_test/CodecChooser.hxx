@@ -6,6 +6,7 @@
 
 #include <QWidget>
 #include <QLayout>
+#include <vector>
 
 class CodecChooser : public QObject {
     Q_OBJECT
@@ -13,6 +14,7 @@ public:
     CodecChooser(QWidget* parent, CodecWrapper* codec);
     virtual ~CodecChooser(void);
     QLayout* getLayout(void) { return layout; };
+    void addCodecOptionSetter(QWidget* setter);
 private slots:
     void onCodecToggled(int id, bool state);
 signals:
@@ -21,6 +23,7 @@ private:
     QWidget* parent;
     QLayout* layout;
     CodecWrapper* codec;
+    std::vector<QWidget*> optionSetters;
 };
 
 #endif // __CODEC_CHOOSER_HXX__
