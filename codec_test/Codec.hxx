@@ -4,8 +4,12 @@
 
 #include <stdint.h>
 
+#include "PacketLossSimulator.hxx"
+
 class Codec {
 public:
+    Codec(void) { pls = 0; };
+    void setPLS(PacketLossSimulator* pls) { this->pls = pls; };
     virtual ~Codec(void) {};
     virtual const char* getName(void) const = 0;
     virtual void init(void) = 0;
@@ -16,6 +20,8 @@ public:
     virtual int encode(const int16_t* src, int srclen, char* dst) = 0;
     virtual int decode(const char* src, int srclen, int16_t* dst) = 0;
     virtual int codec(const int16_t* src, int srclen, int16_t* dst, int& bps) = 0;
+protected:
+    PacketLossSimulator* pls;
 };
 
 #endif // __CODEC_HXX__

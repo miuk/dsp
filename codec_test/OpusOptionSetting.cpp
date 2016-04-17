@@ -1,11 +1,12 @@
 #include "OpusOptionSetting.hxx"
+#include "Slider.hxx"
 
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QRadioButton>
 #include <QButtonGroup>
 #include <QLabel>
-#include <QSlider>
+#include <QCheckBox>
 
 #include <iostream>
 using namespace std;
@@ -29,20 +30,50 @@ OpusOptionSetting::OpusOptionSetting(QWidget* parent, OpusCodec* codec)
     layout->addRow(new QLabel("xBR"), w);
 
     w = new QHBoxLayout(parent);
-    QLabel* l = new QLabel(parent);
-    l->setFont(QFont("Courier"));
-    w->addWidget(l);
-    QSlider* s = new QSlider(Qt::Horizontal, parent);
-    s->setMinimum(1);
-    s->setMaximum(256);
+    Slider* s = new Slider(parent, 1, 256, 12);
     connect(s, SIGNAL(valueChanged(int)), this, SLOT(onKBpsChanged(int)));
-    connect(this, SIGNAL(setKBpsStr(const QString&)), l, SLOT(setText(const QString&)));
-    connect(this, SIGNAL(setKBps(int)), s, SLOT(setValue(int)));
     connect(this, SIGNAL(setKBpsRange(int,int)), s, SLOT(setRange(int,int)));
-    w->addWidget(s);
-    setKBps(12);
+    s->addToLayout(w);
     layout->addRow(new QLabel("kbps"), w);
 
+    w = new QHBoxLayout(parent);
+    s = new Slider(parent, 0, 10, 5);
+    connect(s, SIGNAL(valueChanged(int)), this, SLOT(onComplexityChanged(int)));
+    s->addToLayout(w);
+    layout->addRow(new QLabel("Complexity"), w);
+
+    w = new QHBoxLayout(parent);
+    s = new Slider(parent, 8, 24, 24);
+    connect(s, SIGNAL(valueChanged(int)), this, SLOT(onLSBDepthChanged(int)));
+    s->addToLayout(w);
+    layout->addRow(new QLabel("LSB Depth"), w);
+
+    w = new QHBoxLayout(parent);
+    s = new Slider(parent, 0 ,100, 0);
+    connect(s, SIGNAL(valueChanged(int)), this, SLOT(onPLCChanged(int)));
+    s->addToLayout(w);
+    layout->addRow(new QLabel("PLC tuning"), w);
+
+    w = new QHBoxLayout(parent);
+    s = new Slider(parent, -32768, 32767, 0);
+    connect(s, SIGNAL(valueChanged(int)), this, SLOT(onGainChanged(int)));
+    s->addToLayout(w);
+    layout->addRow(new QLabel("Gain"), w);
+
+    w = new QHBoxLayout(parent);
+    QCheckBox* cb = new QCheckBox("DTX", parent);
+    connect(cb, SIGNAL(stateChanged(int)), this, SLOT(onDTXChanged(int)));
+    w->addWidget(cb);
+    cb = new QCheckBox("Inband FEC", parent);
+    connect(cb, SIGNAL(stateChanged(int)), this, SLOT(onInbandFECChanged(int)));
+    w->addWidget(cb);
+    cb = new QCheckBox("Prediction Disabled", parent);
+    connect(cb, SIGNAL(stateChanged(int)), this, SLOT(onPredictionDisabledChanged(int)));
+    w->addWidget(cb);
+    layout->addRow(new QLabel("Options"), w);
+
+    // encoder
+    //PREDICTION_DISABLED 0 1
     this->layout = layout;
 }
 
@@ -66,9 +97,6 @@ OpusOptionSetting::onKBpsChanged(int value)
     //cout << "onKBpsChanged value=" << value << endl;
     kbps = value;
     codec->setBps(value*1000);
-    char work[16];
-    sprintf(work, "%3d", kbps);
-    setKBpsStr(work);
 }
 
 void
@@ -86,4 +114,49 @@ OpusOptionSetting::chooseSource(const QString&, const QAudioFormat& fmt, QIODevi
     default :
         break;
     }
+}
+
+void
+OpusOptionSetting::onComplexityChanged(int value)
+{
+    codec->setComplexity(value);
+}
+
+void
+OpusOptionSetting::onDTXChanged(int value)
+{
+    bool val = (value == 2);
+    codec->setDTX(val);
+}
+
+void
+OpusOptionSetting::onInbandFECChanged(int value)
+{
+    bool val = (value == 2);
+    codec->setInbandFEC(val);
+}
+
+void
+OpusOptionSetting::onLSBDepthChanged(int value)
+{
+    codec->setLSBDepth(value);
+}
+
+void
+OpusOptionSetting::onPLCChanged(int value)
+{
+    codec->setPLC(value);
+}
+
+void
+OpusOptionSetting::onPredictionDisabledChanged(int value)
+{
+    bool val = (value == 2);
+    codec->setPredictionDisabled(val);
+}
+
+void
+OpusOptionSetting::onGainChanged(int value)
+{
+    codec->setGain(value);
 }

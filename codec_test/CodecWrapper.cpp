@@ -4,10 +4,12 @@
 
 using namespace std;
 
-CodecWrapper::CodecWrapper(void)
+CodecWrapper::CodecWrapper(PacketLossSimulator* pls)
 {
+    this->pls = pls;
     Codec* codec = new NullCodec();
     codec->init();
+    codec->setPLS(pls);
     codecs.push_back(codec);
     setCodec(0);
 }
@@ -33,6 +35,7 @@ void
 CodecWrapper::addCodec(Codec* codec)
 {
     codec->init();
+    codec->setPLS(pls);
     codecs.push_back(codec);
 }
 

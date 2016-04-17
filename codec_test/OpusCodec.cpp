@@ -15,6 +15,14 @@ OpusCodec::OpusCodec(void)
     bps = 12000;
     xBR = 0;
 
+    complexity = 5;
+    dtx = false;
+    inband_fec = false;
+    lsb_depth = 24;
+    plc_tuning = 0;
+    prediction_disabled = false;
+    gain = 0;
+
     pthread_mutex_init(&mutex, NULL);
 }
 
@@ -43,14 +51,17 @@ OpusCodec::initXBR(int value)
     int err;
     enc = opus_encoder_create(hz, 1, OPUS_APPLICATION_VOIP, &err);
     dec = opus_decoder_create(hz, 1, &err);
-    frame_size = hz / 100;
+    frame_size = hz / 50;       // 20ms frame
     int val = (xBR == 0) ? 0 : 1;
     opus_encoder_ctl(enc, OPUS_SET_VBR(val));
     pthread_mutex_unlock(&mutex);
     setBps(bps);
+    initOptions();
+    opus_encoder_ctl(enc, OPUS_GET_EXPERT_FRAME_DURATION(&val));
     cout << "OpusCodec::initXBR, frame_size=" << frame_size
          << ", xBR=" << xBR
          << ", bps=" << bps
+         << ", expert_frame_duration=" << val
          << endl;
 }
 
@@ -80,6 +91,77 @@ OpusCodec::setXBR(int value)
     if (value == xBR)
         return;
     initXBR(value);
+}
+
+void
+OpusCodec::setComplexity(int value)
+{
+    complexity = value;
+    opus_encoder_ctl(enc, OPUS_SET_COMPLEXITY(value));
+}
+
+void
+OpusCodec::setDTX(bool value)
+{
+    dtx = value;
+    int val = (value) ? 1 : 0;
+    opus_encoder_ctl(enc, OPUS_SET_DTX(val));
+}
+
+void
+OpusCodec::setInbandFEC(bool value)
+{
+    inband_fec = value;
+    int val = (value) ? 1 : 0;
+    opus_encoder_ctl(enc, OPUS_SET_INBAND_FEC(val));
+}
+
+void
+OpusCodec::setLSBDepth(int value)
+{
+    lsb_depth = value;
+    opus_encoder_ctl(enc, OPUS_SET_LSB_DEPTH(value));
+}
+
+void
+OpusCodec::setPLC(int value)
+{
+    plc_tuning = value;
+    opus_encoder_ctl(enc, OPUS_SET_PACKET_LOSS_PERC(value));
+}
+
+void
+OpusCodec::setPredictionDisabled(bool value)
+{
+    prediction_disabled = value;
+    int val = (value) ? 1 : 0;
+    opus_encoder_ctl(enc, OPUS_SET_PREDICTION_DISABLED(val));
+}
+
+void
+OpusCodec::setGain(int value)
+{
+    gain = value;
+    opus_decoder_ctl(dec, OPUS_SET_GAIN(value));
+}
+
+void
+OpusCodec::initOptions(void)
+{
+    setComplexity(complexity);
+    setDTX(dtx);
+    setInbandFEC(inband_fec);
+    setLSBDepth(lsb_depth);
+    setPLC(plc_tuning);
+    setPredictionDisabled(prediction_disabled);
+    setGain(gain);
+}
+
+int
+OpusCodec::getFrameSize(void)
+{
+    int ptime = pls->getPtime();
+    return frame_size * (ptime / 20);
 }
 
 void
@@ -120,12 +202,17 @@ OpusCodec::codec(const int16_t* src, int srclen, int16_t* dst, int& bps)
     int dstlen = 0;
     int16_t* dst_pos = dst;
     const int16_t* src_pos = src;
+    int nf = pls->getPtime() / 20;
+    bool bLost = false;
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < n; i++) {
+        if (i % nf == 0)
+            bLost = pls->isLost();
         uint8_t encoded[frame_size*2];
         int nbyte = opus_encode(enc, src_pos, frame_size, encoded, frame_size*2);
         enclen += nbyte;
-        int ret = opus_decode(dec, encoded, nbyte, dst_pos, frame_size, 0);
+        uint8_t* bits = (bLost) ? NULL : encoded;
+        int ret = opus_decode(dec, bits, nbyte, dst_pos, frame_size, 0);
         if (ret <= 0) {
             cout << "OpusCodec::codec decode failed " << ret << endl;
         }

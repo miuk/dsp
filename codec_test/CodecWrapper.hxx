@@ -7,7 +7,7 @@
 
 class CodecWrapper : public Codec {
 public:
-    CodecWrapper(void);
+    CodecWrapper(PacketLossSimulator* pls);
     virtual ~CodecWrapper(void);
     const char* getName(void) const;
     virtual void init(void);

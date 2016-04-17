@@ -16,8 +16,13 @@ public:
 private slots:
     void onXBRToggled(int id, bool state);
     void onQualityChanged(int value);
+    void onPLCChanged(int value);
+    void onVADChanged(int);
+    void onDTXChanged(int);
+    void onENHChanged(int);
 signals:
     void setQuality(int value);
+    void setPLC(int value);
 private:
     QWidget* parent;
     QLayout* layout;

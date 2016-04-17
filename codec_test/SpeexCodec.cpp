@@ -29,6 +29,11 @@ SpeexCodec::SpeexCodec(void)
     quality = 5;
     xBR = 0;
 
+    vad = false;
+    dtx = false;
+    plc_tuning = 2;;
+    enh = true;
+
     pthread_mutex_init(&mutex, NULL);
 }
 
@@ -68,6 +73,17 @@ SpeexCodec::initXBR(int value)
         dec_state = speex_decoder_init(&speex_uwb_mode);
         break;
     };
+
+    int val;
+    speex_encoder_ctl(enc_state, SPEEX_GET_VAD, &val);
+    cout << "VAD=" << val;
+    speex_encoder_ctl(enc_state, SPEEX_GET_DTX, &val);
+    cout << ", DTX=" << val;
+    speex_encoder_ctl(enc_state, SPEEX_GET_PLC_TUNING, &val);
+    cout << ", PLC=" << val;
+    speex_decoder_ctl(dec_state, SPEEX_GET_ENH, &val);
+    cout << ", ENH=" << val << endl;
+
     speex_bits_init(&enc_bits);
     speex_bits_init(&dec_bits);
     speex_encoder_ctl(enc_state, SPEEX_GET_FRAME_SIZE, &frame_size);
@@ -77,6 +93,7 @@ SpeexCodec::initXBR(int value)
     }
     pthread_mutex_unlock(&mutex);
     setQuality(quality);
+    initOptions();
     cout << "SpeexCodec::initXBR, frame_size=" << frame_size
          << ", xBR=" << xBR
          << ", quality=" << quality
@@ -122,11 +139,58 @@ SpeexCodec::setHz(int hz)
 }
 
 void
+SpeexCodec::initOptions()
+{
+    setVAD(vad);
+    setDTX(dtx);
+    setENH(enh);
+    setPLC(plc_tuning);
+}
+
+void
 SpeexCodec::setXBR(int value)
 {
     if (value == xBR)
         return;
     initXBR(value);
+}
+
+void
+SpeexCodec::setVAD(bool value)
+{
+    vad = value;
+    int val = (value) ? 1 : 0;
+    speex_encoder_ctl(enc_state, SPEEX_SET_VAD, &val);
+}
+
+void
+SpeexCodec::setDTX(bool value)
+{
+    dtx = value;
+    int val = (value) ? 1 : 0;
+    speex_encoder_ctl(enc_state, SPEEX_SET_DTX, &val);
+}
+
+void
+SpeexCodec::setENH(bool value)
+{
+    enh = value;
+    int val = (value) ? 1 : 0;
+    speex_decoder_ctl(dec_state, SPEEX_SET_ENH, &val);
+}
+
+void
+SpeexCodec::setPLC(int percent)
+{
+    plc_tuning = percent;
+    speex_encoder_ctl(enc_state, SPEEX_SET_PLC_TUNING, &percent);
+}
+
+int
+SpeexCodec::getFrameSize(void)
+{
+    int ptime = pls->getPtime();
+    return frame_size * (ptime / 20);
 }
 
 void
@@ -193,15 +257,20 @@ SpeexCodec::codec(const int16_t* src, int srclen, int16_t* dst, int& bps)
     int dstlen = 0;
     int16_t* dst_pos = dst;
     int16_t* src_pos = buf;
+    int nf = pls->getPtime() / 20;
+    bool bLost = false;
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < n; i++) {
+        if (i % nf == 0)
+            bLost = pls->isLost();
         char encoded[frame_size*2];
         speex_bits_reset(&enc_bits);
         speex_encode_int(enc_state, src_pos, &enc_bits);
         int nbyte = speex_bits_write(&enc_bits, encoded, frame_size*2);
         enclen += nbyte;
         speex_bits_read_from(&dec_bits, encoded, nbyte);
-        int ret = speex_decode_int(dec_state, &dec_bits, dst_pos);
+        SpeexBits* bits = (bLost) ? NULL : &dec_bits;
+        int ret = speex_decode_int(dec_state, bits, dst_pos);
         if (ret != 0) {
             cout << "SpeexCodec::codec decode failed " << ret << endl;
         }

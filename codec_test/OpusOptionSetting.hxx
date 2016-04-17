@@ -18,6 +18,13 @@ private slots:
     void onXBRToggled(int id, bool state);
     void onKBpsChanged(int value);
     void chooseSource(const QString&, const QAudioFormat&, QIODevice*);
+    void onComplexityChanged(int value);
+    void onDTXChanged(int value);
+    void onInbandFECChanged(int value);
+    void onLSBDepthChanged(int value);
+    void onPLCChanged(int value);
+    void onPredictionDisabledChanged(int value);
+    void onGainChanged(int value);
 signals:
     void setKBps(int value);
     void setKBpsStr(const QString& value);

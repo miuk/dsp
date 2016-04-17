@@ -11,6 +11,7 @@
 #endif
 #include "CodecWrapper.hxx"
 #include "CodecChooser.hxx"
+#include "PacketLossSetting.hxx"
 
 #include <QApplication>
 #include <QGroupBox>
@@ -50,6 +51,7 @@ private:
 #endif
     SpeexCodec* spxCodec;
     OpusCodec* opsCodec;
+    PacketLossSimulator* pls;
 };
 
 
@@ -63,7 +65,8 @@ MyApp::init(void)
     gb->setLayout(player->getLayout());
     v->addWidget(gb);
 
-    codec = new CodecWrapper();
+    pls = new PacketLossSimulator();
+    codec = new CodecWrapper(pls);
     ulawCodec = new ULawCodec();
     codec->addCodec(ulawCodec);
 #ifdef USE_G729
@@ -107,6 +110,11 @@ MyApp::init(void)
     cc->addCodecOptionSetter(gb);
     connect(chooser, SIGNAL(chooseSource(const QString&, const QAudioFormat&, QIODevice*))
             , ops, SLOT(chooseSource(const QString&, const QAudioFormat&, QIODevice*)));
+
+    gb = new QGroupBox("packet loss simulation");
+    PacketLossSetting* p = new PacketLossSetting(this, pls);
+    gb->setLayout(p->getLayout());
+    v->addWidget(gb);
 
     setLayout(v);
 }

@@ -52,6 +52,13 @@ G729aCodec::init(void)
     Init_Post_Process();
 }
 
+int
+G729aCodec::getFrameSize(void)
+{
+    int ptime = pls->getPtime();
+    return L_FRAME * (ptime / 10);
+};
+
 void
 G729aCodec::clear(void)
 {
@@ -81,29 +88,37 @@ G729aCodec::codec(const int16_t* src, int srclen, int16_t* dst, int& bps)
     int16_t* dst_pos = dst;
     int enclen = 0;
     int dstlen = 0;
+    int nf = pls->getPtime() / 20;
+    bool bLost = false;
     for (int i = 0; i < n; i++) {
-        Word16 serial[SERIAL_SIZE];
-        // encode
-        memcpy(new_speech, src_pos, sizeof(int16_t) * L_FRAME);
-        Pre_Process(new_speech, L_FRAME);
-        Coder_ld8a(prm);
-        prm2bits_ld8k(prm, serial);
-        // decode
-        bits2prm_ld8k(&serial[2], &parm[1]);
-        //enclen += SERIAL_SIZE;
-        enclen += PRM_SIZE;
-        /* the hardware detects frame erasures by checking if all bits
-           are set to zero
-        */
-        parm[0] = 0;           /* No frame erasure */
-        for (int j = 2; j < SERIAL_SIZE; j++)
-            if (serial[j] == 0 ) parm[0] = 1; /* frame erased     */
-        /* check pitch parity and put 1 in parm[4] if parity error */
-        parm[4] = Check_Parity_Pitch(parm[3], parm[4]);
-        Decod_ld8a(parm, synth, Az_dec, T2);
-        Post_Filter(synth, Az_dec, T2);        /* Post-filter */
-        Post_Process(synth, L_FRAME);
-        memcpy(dst_pos, synth, sizeof(int16_t) * L_FRAME);
+        if (i % nf == 0)
+            bLost = pls->isLost();
+        if (bLost) {
+            memset(dst_pos, 0, sizeof(int16_t) * L_FRAME);
+        } else {
+            Word16 serial[SERIAL_SIZE];
+            // encode
+            memcpy(new_speech, src_pos, sizeof(int16_t) * L_FRAME);
+            Pre_Process(new_speech, L_FRAME);
+            Coder_ld8a(prm);
+            prm2bits_ld8k(prm, serial);
+            // decode
+            bits2prm_ld8k(&serial[2], &parm[1]);
+            //enclen += SERIAL_SIZE;
+            enclen += PRM_SIZE;
+            /* the hardware detects frame erasures by checking if all bits
+               are set to zero
+            */
+            parm[0] = 0;           /* No frame erasure */
+            for (int j = 2; j < SERIAL_SIZE; j++)
+                if (serial[j] == 0 ) parm[0] = 1; /* frame erased     */
+            /* check pitch parity and put 1 in parm[4] if parity error */
+            parm[4] = Check_Parity_Pitch(parm[3], parm[4]);
+            Decod_ld8a(parm, synth, Az_dec, T2);
+            Post_Filter(synth, Az_dec, T2);        /* Post-filter */
+            Post_Process(synth, L_FRAME);
+            memcpy(dst_pos, synth, sizeof(int16_t) * L_FRAME);
+        }
         src_pos += L_FRAME;
         dst_pos += L_FRAME;
         dstlen += L_FRAME;
