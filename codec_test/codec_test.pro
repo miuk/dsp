@@ -12,7 +12,7 @@ LIBS += -lspeex -lopus
 
 # Input
 HEADERS += Player.hxx AudioSource.hxx SourceChooser.hxx SpeexOptionSetting.hxx NullCodec.hxx CodecWrapper.hxx CodecChooser.hxx OpusCodec.hxx OpusOptionSetting.hxx ULawCodec.hxx Slider.hxx PacketLossSetting.hxx PacketLossSimulator.hxx
-SOURCES += Hello.cpp Player.cpp AudioSource.cpp SourceChooser.cpp SpeexOptionSetting.cpp SpeexCodec.cpp NullCodec.cpp CodecWrapper.cpp CodecChooser.cpp ../wav.cpp ../ulaw.c OpusCodec.cpp OpusOptionSetting.cpp ULawCodec.cpp Slider.cpp PacketLossSetting.cpp PacketLossSimulator.cpp
+SOURCES += main.cpp Player.cpp AudioSource.cpp SourceChooser.cpp SpeexOptionSetting.cpp SpeexCodec.cpp NullCodec.cpp CodecWrapper.cpp CodecChooser.cpp ../wav.cpp ../ulaw.c OpusCodec.cpp OpusOptionSetting.cpp ULawCodec.cpp Slider.cpp PacketLossSetting.cpp PacketLossSimulator.cpp
 QT += widgets
 QT += multimedia
 

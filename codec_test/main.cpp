@@ -32,12 +32,12 @@
 #include <iostream>
 using namespace std;
 
-class MyApp : public QWidget {
+class MainApp : public QWidget {
     // SLOT を作る場合必須
     Q_OBJECT
 public:
-    MyApp(QApplication* app) { this->app = app; };
-    virtual ~MyApp(void) {};
+    MainApp(QApplication* app) { this->app = app; };
+    virtual ~MainApp(void) {};
     void init(void);
 private:
 
@@ -56,7 +56,7 @@ private:
 
 
 void
-MyApp::init(void)
+MainApp::init(void)
 {
     v = new QVBoxLayout();
 
@@ -123,7 +123,7 @@ int
 main(int ac, char* av[])
 {
     QApplication app(ac, av);
-    MyApp* w = new MyApp(&app);
+    MainApp* w = new MainApp(&app);
     w->init();
     w->show();
     
@@ -131,4 +131,4 @@ main(int ac, char* av[])
 }
 
 // SLOT を作る場合必須
-#include "Hello.moc"
+#include "main.moc"
