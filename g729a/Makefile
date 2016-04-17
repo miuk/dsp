@@ -9,7 +9,7 @@ OBJS = \
 	DEC_GAIN.o DSPFUNC.o LPCFUNC.o \
 	PITCH_A.o PRE_PROC.o TAB_LD8A.o
 
-CFLAGS = -O2 -D__unix__
+CFLAGS = -O2 -D__unix__ -mmacosx-version-min=10.7
 
 TARGET = libg729a.a
 
