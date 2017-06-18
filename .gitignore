@@ -3,3 +3,5 @@
 *.o
 *.moc
 *.app
+g729a/*
+codec_test/moc_*.cpp
